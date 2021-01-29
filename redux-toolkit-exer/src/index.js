@@ -3,12 +3,11 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "./modules";
-import { createStore } from "redux";
 import { Provider } from "react-redux";
-import { composeWithDevTools } from "redux-devtools-extension";
 
-const store = createStore(rootReducer, composeWithDevTools());
+const store = configureStore({ reducer: rootReducer, devTools: true });
 
 ReactDOM.render(
   <Provider store={store}>
