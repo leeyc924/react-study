@@ -19,10 +19,9 @@ import Konva from "konva";
 
 const App = () => {
   const [ratio, setRatio] = useState(1);
-  const [degreeIndex, setDegreeIndex] = useState(0);
-  const horizonResolution = degreeIndex % 2 === 0? 1000 : 500;
-  const verticalResolution = degreeIndex % 2 === 0? 500 : 1000;
-  const degree = [0, 90, 180, 270];
+  const horizonResolution = 1000;
+  const verticalResolution = 500;
+  const [angle, setAngle] = useState(0);
 
   const [layerList, setLayerList] = useState([
     {
@@ -60,27 +59,12 @@ const App = () => {
   ]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
 
-  // 브라우저 비율에 맞는 가로 해상도
-  const ratioHorizon = useMemo(
-    () => Math.round(ratio * Number(horizonResolution)),
-    [ratio, horizonResolution]
-  );
-  // 브라우저 비율에 맞는 세로 해상도
-  const ratioVertical = useMemo(
-    () => Math.round(ratio * Number(verticalResolution)),
-    [ratio, verticalResolution]
-  );
-  // 플레이어 영역 비율에 맞춰 계산
-  const playerAreaInfo = useMemo(
-    () => ({
-      x: Math.round((window.innerWidth - ratioHorizon - 40) / ratio / 2),
-      y: Math.round((window.innerHeight - ratioVertical) / ratio / 2),
-      width: Math.round(ratioHorizon / ratio),
-      height: Math.round(ratioVertical / ratio),
-    }),
-    [ratioHorizon, ratioVertical, ratio]
-  );
-
+  const [playerAreaInfo, setPlayerAreaInfo] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
   // window resize에 따른 비율 계산 로직
   const handleResize = useCallback(() => {
     const width = Number(horizonResolution || 1); // 가로 해상도
@@ -88,6 +72,16 @@ const App = () => {
     const scalex = (window.innerWidth - 40) / width;
     const scaley = (window.innerHeight - 40) / height;
     const ratio = scalex < scaley ? scalex : scaley; // 현재 화면에 맞는 비율 정보
+
+    const ratioHorizon = Math.round(ratio * Number(horizonResolution));
+    const ratioVertical = Math.round(ratio * Number(verticalResolution));
+
+    setPlayerAreaInfo({
+      x: Math.round((window.innerWidth - ratioHorizon - 40) / ratio / 2),
+      y: Math.round((window.innerHeight - ratioVertical) / ratio / 2),
+      width: Math.round(ratioHorizon / ratio),
+      height: Math.round(ratioVertical / ratio),
+    });
 
     setRatio(ratio);
   }, [horizonResolution, verticalResolution]);
@@ -120,7 +114,48 @@ const App = () => {
     return layerList.find((layer) => layer.layerId === selectedLayerId);
   }, [layerList, selectedLayerId]);
 
-  console.log("degree[degreeIndex]", degree[degreeIndex]);
+  const viewLayerInfo = useMemo(() => {
+    if (selectedLayer) {
+      const PI = Math.PI / 180;
+
+      let x = selectedLayer.x;
+      let y = selectedLayer.y;
+      let width = selectedLayer.width;
+      let height = selectedLayer.height;
+
+      const originPoint = [
+        [x, -y],
+        [x + width, -y],
+        [x, -y - height],
+        [x + width, -y - height],
+      ];
+
+      const newPoint = [];
+      for (const point of originPoint) {
+        newPoint.push([
+          point[0] * Math.floor(Math.cos(angle * PI)) -
+            point[1] * Math.floor(Math.sin(angle * PI)),
+          point[0] * Math.floor(Math.sin(angle * PI)) +
+            point[1] * Math.floor(Math.cos(angle * PI)),
+        ]);
+      }
+      console.table(newPoint);
+      return {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      };
+    } else {
+      return {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      };
+    }
+  }, [selectedLayer, angle]);
+
   return (
     <>
       {selectedLayer && (
@@ -133,15 +168,23 @@ const App = () => {
             <span>w: {selectedLayer.width}</span>
             <span>h: {selectedLayer.height}</span>
           </div>
+          <br />
+          <div>
+            <span>x: {viewLayerInfo.x}</span>
+            <span>y: {viewLayerInfo.y}</span>
+          </div>
+          <div>
+            <span>w: {viewLayerInfo.width}</span>
+            <span>h: {viewLayerInfo.height}</span>
+          </div>
         </LayerOffset>
       )}
       <Button
-        onClick={() =>
-          setDegreeIndex((degreeIndex) =>
-            degreeIndex > 2 ? 0 : degreeIndex + 1
-          )
-        }
+        onClick={() => setAngle((angle) => (angle === 270 ? 0 : angle + 90))}
       >
+        <div>
+          <span>{angle}</span>
+        </div>
         회전
       </Button>
       <Stage
@@ -157,7 +200,7 @@ const App = () => {
           scaleY={1}
           offsetX={horizonResolution / 2}
           offsetY={verticalResolution / 2}
-          rotation={degree[degreeIndex]}
+          rotation={angle}
         >
           <Rect
             width={playerAreaInfo.width}
