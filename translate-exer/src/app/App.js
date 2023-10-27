@@ -7,7 +7,7 @@ const App = () => {
   const { t } = useTranslation();
 
   const changeLang = () => {
-    const newLangCode = langCode === "kr" ? "en" : "kr";
+    const newLangCode = langCode === "kr" ? "en" : "k r";
     i18next.changeLanguage(newLangCode);
     setLangCode(newLangCode);
   };
@@ -16,8 +16,8 @@ const App = () => {
     <div>
       <button onClick={() => changeLang()}>언어토글</button>
       <div>현재 {langCode}</div>
-      {t("NAME",{krNm: '카테고리', enNm: 'category'} )}
-      {t("TOTAL_QTY",{totalQty: '1'} )}
+      {t("NAME", { krNm: "카테고리", enNm: "category" })}
+      {t("TOTAL_QTY", { totalQty: "1" })}
     </div>
   );
 };
